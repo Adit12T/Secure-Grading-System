@@ -24,7 +24,8 @@ protection. Version 2 is a rebuild that fixes each of them, with tests that prov
 | Secrets | Hard-coded in the source | `SECRET_KEY` from the environment; required in production |
 | Browser hardening | None | Content Security Policy, no framing, `nosniff`, `no-store`, secure cookie flags |
 | Record keeping | None | Audit log of sign-ins, password resets, grade changes and enrolments |
-| Tests | None | 16 pytest tests covering each of the above |
+| Sessions | Never expired | One-hour sessions that end when the password changes, so a reset locks out a stolen session |
+| Tests | None | 19 pytest tests covering each of the above |
 
 ## Features
 
@@ -64,8 +65,8 @@ pytest
 
 ## Limitations
 
-- Password reset links are written to the application log instead of being emailed; plugging in an
-  SMTP service is a configuration step.
+- No mail service is configured: in development the reset link is written to the log; in production
+  only the fact that a reset was requested is logged (never the link), until an SMTP service is plugged in.
 - The login lockout is kept in memory per process; a multi-server deployment would need a shared store.
 - SQLite suits a single server; a larger deployment would move to PostgreSQL.
 

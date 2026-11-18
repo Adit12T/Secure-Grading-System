@@ -1,4 +1,5 @@
 import logging
+import os
 import sqlite3
 
 from flask import Blueprint, current_app, flash, g, redirect, render_template, session, url_for
@@ -14,6 +15,17 @@ log = logging.getLogger(__name__)
 
 # A real hash to compare against when the username does not exist, so response time doesn't reveal it.
 _DUMMY_HASH = generate_password_hash("not-a-real-password")
+
+
+def _deliver_reset_link(user_id: int, link: str) -> None:
+    """Hands the link to the mailer. No mailer is configured, so: tests capture it, development logs it,
+    and production logs only that a reset was requested (a link in a log would let log readers take over accounts)."""
+    if current_app.testing:
+        current_app.extensions.setdefault("sent_reset_links", []).append(link)
+    elif current_app.debug or os.environ.get("FLASK_ENV") != "production":
+        log.info("Password reset link (development only): %s", link)
+    else:
+        log.warning("Password reset requested for user %s, but no mailer is configured.", user_id)
 
 
 def _serializer() -> URLSafeTimedSerializer:
@@ -42,6 +54,7 @@ def login():
             throttle.reset(username)
             session.clear()  # new session on login prevents session fixation
             session["user_id"] = user["id"]
+            session["pw"] = user["password_hash"][-16:]  # sessions end when the password changes
             session.permanent = True
             audit(user["id"], "login")
             get_db().commit()
@@ -88,8 +101,7 @@ def forgot():
             # Binding the token to the current hash makes it stop working once the password changes.
             token = _serializer().dumps({"id": user["id"], "h": user["password_hash"][-16:]})
             link = url_for("auth.reset", token=token, _external=True)
-            log.info("Password reset link (deliver by email in production): %s", link)
-            current_app.extensions.setdefault("sent_reset_links", []).append(link)
+            _deliver_reset_link(user["id"], link)
         # Same answer whether or not the email exists, so accounts cannot be enumerated.
         flash("If that email is registered, a reset link has been sent.", "info")
         return redirect(url_for("auth.login"))

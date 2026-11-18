@@ -9,9 +9,17 @@ from .db import get_db
 
 
 def load_user():
+    """Loads the signed-in user. A session from before the last password change is ended."""
+    g.user = None
     user_id = session.get("user_id")
-    g.user = None if user_id is None else get_db().execute(
-        "SELECT id, username, full_name, email, role FROM user WHERE id = ?", (user_id,)).fetchone()
+    if user_id is None:
+        return
+    user = get_db().execute(
+        "SELECT id, username, full_name, email, role, password_hash FROM user WHERE id = ?", (user_id,)).fetchone()
+    if user is None or user["password_hash"][-16:] != session.get("pw"):
+        session.clear()
+        return
+    g.user = user
 
 
 def login_required(*roles: str):
@@ -39,16 +47,27 @@ class LoginThrottle:
     def _recent(self, key: str) -> list[float]:
         window = current_app.config["LOGIN_LOCKOUT_SECONDS"]
         now = time.monotonic()
-        self._failures[key] = [t for t in self._failures[key] if now - t < window]
-        return self._failures[key]
+        recent = [t for t in self._failures.get(key, ()) if now - t < window]
+        if recent:
+            self._failures[key] = recent
+        else:
+            self._failures.pop(key, None)
+        return recent
 
     def is_locked(self, username: str) -> bool:
         with self._lock:
             return len(self._recent(username.lower())) >= current_app.config["LOGIN_MAX_FAILURES"]
 
+    MAX_TRACKED = 10_000
+
     def fail(self, username: str) -> None:
         with self._lock:
-            self._recent(username.lower()).append(time.monotonic())
+            key = username.lower()
+            if key not in self._failures and len(self._failures) >= self.MAX_TRACKED:
+                # Bounded memory: forget every name whose failures have all expired.
+                for stale in [k for k in self._failures if not self._recent(k)]:
+                    self._failures.pop(stale, None)
+            self._failures[key] = self._recent(key) + [time.monotonic()]
 
     def reset(self, username: str) -> None:
         with self._lock:

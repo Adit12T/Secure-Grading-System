@@ -1,4 +1,5 @@
 from conftest import PASSWORD, csrf, login
+from grading.security import throttle
 
 
 def test_login_redirects_by_role_and_rejects_wrong_password(client):
@@ -66,3 +67,34 @@ def test_security_headers(client):
     headers = client.get("/login").headers
     assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
     assert headers["X-Content-Type-Options"] == "nosniff"
+
+
+def test_changing_the_password_ends_other_sessions(app):
+    thief, owner = app.test_client(), app.test_client()
+    login(thief, "alex")
+    assert thief.get("/account").status_code == 200
+    owner.post("/forgot", data={"email": "alex@example.com", "csrf_token": csrf(owner, "/forgot")})
+    link = app.extensions["sent_reset_links"][-1].replace("http://localhost", "")
+    owner.post(link, data={"password": "brand-new-password-1", "confirm": "brand-new-password-1",
+                           "csrf_token": csrf(owner, link)})
+    response = thief.get("/account")
+    assert response.status_code == 302 and "/login" in response.headers["Location"]
+
+
+def test_login_throttle_forgets_expired_usernames(app):
+    with app.app_context():
+        app.config["LOGIN_LOCKOUT_SECONDS"] = 0  # every failure expires immediately
+        for i in range(50):
+            throttle.fail(f"random-{i}")
+        assert not throttle.is_locked("random-1")
+        assert "random-1" not in throttle._failures
+
+
+def test_reset_links_are_not_logged_in_production(app, caplog, monkeypatch):
+    monkeypatch.setenv("FLASK_ENV", "production")
+    app.testing = False
+    client = app.test_client()
+    with caplog.at_level("INFO"):
+        client.post("/forgot", data={"email": "alex@example.com", "csrf_token": csrf(client, "/forgot")})
+    assert "/reset/" not in caplog.text
+    assert "no mailer is configured" in caplog.text
