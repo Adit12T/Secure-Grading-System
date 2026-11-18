@@ -1,0 +1,10 @@
+{% macro render(form, submit) %}
+<form method="post" novalidate class="form">
+  {{ form.hidden_tag() }}
+  {% for field in form if field.type not in ('CSRFTokenField', 'HiddenField') %}
+    <label>{{ field.label.text }} {{ field(**{'aria-invalid': 'true' if field.errors else 'false'}) }}</label>
+    {% for e in field.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+  {% endfor %}
+  <button type="submit">{{ submit }}</button>
+</form>
+{% endmacro %}

@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% from "_form.html" import render %}
+{% block content %}
+<h1>My grades</h1>{% if not rows %}<p>You are not enrolled in any courses yet.</p>{% else %}<table><thead><tr><th>Course</th><th>Instructor</th><th>Mid 1</th><th>Mid 2</th><th>Mid 3</th><th>Final</th><th>Weighted</th><th>Grade</th></tr></thead><tbody>{% for r, total, grade in rows %}<tr><td>{{ r.id }} {{ r.name }}</td><td>{{ r.instructor }}</td><td>{{ r.midterm1 if r.midterm1 is not none else "—" }}</td><td>{{ r.midterm2 if r.midterm2 is not none else "—" }}</td><td>{{ r.midterm3 if r.midterm3 is not none else "—" }}</td><td>{{ r.final if r.final is not none else "—" }}</td><td>{{ total if total is not none else "—" }}</td><td><strong>{{ grade }}</strong></td></tr>{% endfor %}</tbody></table>{% endif %}
+{% endblock %}

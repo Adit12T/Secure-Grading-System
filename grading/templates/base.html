@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Secure Grading System{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="{{ url_for('auth.index') }}">Secure Grading System</a>
+  {% if g.user %}
+  <nav>
+    {% if g.user.role == 'admin' %}
+      <a href="{{ url_for('admin.courses') }}">Courses</a>
+      <a href="{{ url_for('admin.audit_log') }}">Audit log</a>
+    {% else %}
+      <a href="{{ url_for('grades.home') }}">{{ 'My grades' if g.user.role == 'student' else 'My courses' }}</a>
+    {% endif %}
+    <a href="{{ url_for('auth.account') }}">{{ g.user.full_name }}</a>
+    <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Sign out</button>
+    </form>
+  </nav>
+  {% endif %}
+</header>
+<main>
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <p class="flash {{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</p>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

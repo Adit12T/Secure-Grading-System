@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% from "_form.html" import render %}
+{% block content %}
+<h1>{{ student.full_name }} · {{ course.id }}</h1><p>Scores from 0 to 100. Leave blank if not yet graded. Midterms count 20% each and the final 40%.</p>{{ render(form, "Save grades") }}
+{% endblock %}

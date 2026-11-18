@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% from "_form.html" import render %}
+{% block content %}
+<h1>{{ course.id }} {{ course.name }}</h1><table><thead><tr><th>Student</th><th>Mid 1</th><th>Mid 2</th><th>Mid 3</th><th>Final</th><th>Weighted</th><th>Grade</th><th></th></tr></thead><tbody>{% for r, total, grade in rows %}<tr><td>{{ r.full_name }}</td><td>{{ r.midterm1 if r.midterm1 is not none else "—" }}</td><td>{{ r.midterm2 if r.midterm2 is not none else "—" }}</td><td>{{ r.midterm3 if r.midterm3 is not none else "—" }}</td><td>{{ r.final if r.final is not none else "—" }}</td><td>{{ total if total is not none else "—" }}</td><td>{{ grade }}</td><td><a href="{{ url_for('grades.edit', course_id=course.id, student_id=r.student_id) }}">Edit</a></td></tr>{% endfor %}</tbody></table>
+{% endblock %}

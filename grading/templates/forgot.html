@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% from "_form.html" import render %}
+{% block content %}
+<h1>Reset your password</h1><p>Enter your email and we will send a link that works for 30 minutes.</p>{{ render(form, "Send link") }}
+{% endblock %}

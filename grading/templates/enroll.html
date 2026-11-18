@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% from "_form.html" import render %}
+{% block content %}
+<h1>Enroll a student in {{ course.id }}</h1>{% if form.student_id.choices %}{{ render(form, "Enroll") }}{% else %}<p>Every student is already enrolled.</p>{% endif %}
+{% endblock %}

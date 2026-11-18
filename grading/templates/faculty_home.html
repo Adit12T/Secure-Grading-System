@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% from "_form.html" import render %}
+{% block content %}
+<h1>My courses</h1>{% if not courses %}<p>No courses assigned yet.</p>{% endif %}<ul class="cards">{% for c in courses %}<li><a href="{{ url_for('grades.course', course_id=c.id) }}">{{ c.id }} {{ c.name }}</a> · {{ c.students }} students</li>{% endfor %}</ul>
+{% endblock %}

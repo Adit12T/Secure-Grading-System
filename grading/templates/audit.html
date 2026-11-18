@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% from "_form.html" import render %}
+{% block content %}
+<h1>Audit log</h1><p>The 200 most recent sign-ins, password resets, grade changes and enrolments.</p><table><thead><tr><th>When (UTC)</th><th>Who</th><th>Action</th><th>Detail</th></tr></thead><tbody>{% for r in rows %}<tr><td>{{ r.at }}</td><td>{{ r.username or "—" }}</td><td>{{ r.action }}</td><td>{{ r.detail }}</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

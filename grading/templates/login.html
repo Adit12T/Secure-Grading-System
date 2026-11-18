@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% from "_form.html" import render %}
+{% block content %}
+<h1>Sign in</h1>{{ render(form, "Sign in") }}<p><a href="{{ url_for('auth.signup') }}">Create a student account</a> · <a href="{{ url_for('auth.forgot') }}">Forgot password?</a></p>
+{% endblock %}
